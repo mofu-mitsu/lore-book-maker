@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定資料集ジェネレーター</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- 上部のナビゲーション -->
+    <nav class="top-nav">
+        <div class="hamburger" id="nav-hamburger"><i class="fa-solid fa-bars"></i></div>
+        <div class="nav-links" id="nav-links">
+            <a href="https://mofu-mitsu.github.io/"><i class="fa-solid fa-house"></i> もふみつ工房 ホーム</a>
+            <a href="https://mofu-mitsu.github.io/world-maker/"><i class="fa-solid fa-globe"></i> 世界観メーカー</a>
+            <a href="https://mofu-mitsu.github.io/orikyara-relationship-chart/"><i class="fa-solid fa-diagram-project"></i> 相関図メーカー</a>
+            <a href="#" id="help-link" class="help-link-style"><i class="fa-solid fa-circle-question"></i> ヘルプ・使い方</a>
+        </div>
+    </nav>
+
+    <!-- ヘッダー（ツールボタン群） -->
+    <header>
+        <h1><i class="fa-solid fa-book-journal-whills"></i> 設定資料集ジェネレーター</h1>
+        <!-- スマホ用：ツールボタンのハンバーガー（点々） -->
+        <div class="tools-hamburger" id="tools-hamburger"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+        
+        <div class="header-btns" id="header-btns">
+            <button id="pro-upgrade-btn" class="btn-pro" style="display: none;"><i class="fa-solid fa-crown"></i> Pro版へ</button>
+            <button id="share-btn" class="btn-add"><i class="fa-solid fa-share-nodes"></i> 共有リンク</button>
+            <button id="auth-btn" class="btn-login"><i class="fa-brands fa-google"></i> ログイン</button>
+            <button id="save-json" class="btn-secondary"><i class="fa-solid fa-download"></i> 保存</button>
+            <button id="load-btn-trigger" class="btn-secondary" title="保存したJSONを読み込みます"><i class="fa-solid fa-upload"></i> 読込</button>
+            <input type="file" id="load-json" accept=".json" style="display: none;">
+            <button id="export-pdf" class="btn-primary"><i class="fa-solid fa-file-pdf"></i> PDF出力</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- 左側：エディター -->
+        <div class="editor-area">
+            <h2><i class="fa-solid fa-pen-nib"></i> 編集エリア</h2>
+            
+            <div class="form-group box">
+                <label>プロジェクト名（タイトル）</label>
+                <input type="text" id="project-title" placeholder="例：幻創紀行 -Aethelgard-">
+                
+                <label style="margin-top: 10px;">表紙画像</label>
+                <label for="cover-image" class="custom-file-upload"><i class="fa-solid fa-image"></i> 画像を選択</label>
+                <input type="file" id="cover-image" accept="image/*">
+                <div id="cover-file-name" class="file-name-display"></div>
+            </div>
+
+            <!-- 🎨 折りたたみ式で可愛いカラーパレット -->
+<!-- 🎨 折りたたみ式で可愛いカラーパレット -->
+            <details class="color-palette-box box">
+                <summary>
+                    <span><i class="fa-solid fa-palette"></i> テーマカラーをカスタマイズ</span>
+                    <i class="fa-solid fa-chevron-down arrow-icon"></i>
+                </summary>
+                <div class="palette-container">
+                    <div class="color-item"><input type="color" id="color-accent" value="#2c3e50"><span>見出し</span></div>
+                    <div class="color-item"><input type="color" id="color-primary" value="#e67e22"><span>アクセント</span></div>
+                    <div class="color-item"><input type="color" id="color-text" value="#333333"><span>文字色</span></div>
+                    <div class="color-item"><input type="color" id="color-bg" value="#ffffff"><span>背景色</span></div>
+                </div>
+                <!-- ✨ 反映ボタンを追加！ -->
+                <div style="text-align: center; margin-top: 15px;">
+                    <button id="apply-color-btn" class="btn-primary" style="padding: 5px 15px; font-size: 0.9rem;">
+                        <i class="fa-solid fa-check"></i> 色を反映する
+                    </button>
+                </div>
+            </details>
+
+            <div class="add-section-area box">
+                <label>追加する項目を選んでください</label>
+                <div class="select-add-group">
+                    <select id="section-type-select">
+                        <option value="world">世界概要</option>
+                        <option value="geography">地理・国家</option>
+                        <option value="organization">組織</option>
+                        <option value="character">キャラ情報 (画像付)</option>
+                        <option value="relationship">相関図・関係図 (画像付)</option>
+                        <option value="term">用語集</option>
+                        <option value="history">年表</option>
+                        <option value="rule">ルール・禁則事項</option>
+                        <option value="theme">作品テーマ</option>
+                        <option value="custom">✨ カスタム項目</option>
+                    </select>
+                    <button id="add-sec-btn" class="btn-add"><i class="fa-solid fa-plus"></i> 追加</button>
+                </div>
+            </div>
+            <div id="editor-sections"></div>
+        </div>
+
+        <!-- 右側：プレビュー -->
+        <div class="preview-area">
+            <h2><i class="fa-solid fa-eye"></i> プレビュー</h2>
+            <div id="pdf-content" class="document">
+                <div id="preview-cover" class="cover-page">
+                    <img id="preview-cover-img" src="" style="display:none;">
+                    <h1 id="preview-title">プロジェクト名</h1>
+                </div>
+                <div id="preview-sections"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ヘルプ用のモーダル（ポップアップ） -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h2><i class="fa-solid fa-book-open"></i> 使い方・ヘルプ</h2>
+            <ul>
+                <li><strong>追加：</strong> プルダウンから好きな項目（キャラ、年表など）を選んで「追加」できます。</li>
+                <li><strong>並べ替え：</strong> 各項目の左上にある「<i class="fa-solid fa-grip-vertical"></i>」をドラッグすると、順番を自由に入れ替えられます。</li>
+                <li><strong>保存・読込：</strong> 「保存」を押すと、今のデータを<b>JSONファイル</b>としてパソコンに保存できます。「読込」からそのJSONファイルを選べば、いつでも続きから作業できます！</li>
+                <li><strong>共有リンク：</strong> Supabaseにデータを保存し、他の人に見せられる専用URLを発行します。（※ログイン推奨）</li>
+                <li><strong>PDF出力：</strong> 完成した資料集を、綺麗な本のようなPDFとしてダウンロードできます！</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- トースト通知用の枠 -->
+    <div id="toast" class="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
