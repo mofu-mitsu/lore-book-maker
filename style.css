@@ -578,3 +578,40 @@ input[type="color"]:hover { transform: scale(1.15) translateY(-2px); box-shadow:
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     min-height: 297mm;
 }
+
+/* --- 👑 Pro専用 デザインテンプレート --- */
+/* アンティーク */
+.template-antique {
+    background-color: #fdf6e3 !important; color: #5c4a3d !important;
+    font-family: "Sawarabi Mincho", "Yu Mincho", serif !important;
+}
+.template-antique h2 { border-bottom: 2px double #cba276 !important; color: #8b5a2b !important; }
+.template-antique .char-preview { background-color: #fff9ed !important; border-color: #e5c9a8 !important; }
+
+/* ダークファンタジー */
+.template-dark-fantasy {
+    background-color: #1a1a1a !important; color: #d0d0d0 !important;
+    font-family: "Sawarabi Mincho", "Yu Mincho", serif !important;
+}
+.template-dark-fantasy h2 { border-bottom: 1px solid #8b0000 !important; color: #ff4c4c !important; }
+.template-dark-fantasy .char-preview { background-color: #252525 !important; border-color: #444 !important;}
+
+/* サイバーパンク */
+.template-cyberpunk {
+    background-color: #050510 !important; color: #00ffcc !important;
+    font-family: "Courier New", monospace !important;
+}
+.template-cyberpunk h2 { border-bottom: 2px dashed #ff00ff !important; color: #ff00ff !important; }
+.template-cyberpunk .char-preview { background-color: #0a0a2a !important; border: 1px solid #00ffcc !important;}
+
+/* 目次のデザイン */
+.toc-container { margin-bottom: 40px; padding: 20px; background: rgba(128,128,128,0.05); border-radius: 8px; }
+.toc-list { list-style: none; padding: 0; }
+.toc-list li { margin-bottom: 8px; font-weight: bold; border-bottom: 1px dotted #ccc; }
+
+/* --- PDFのページまたぎ（分割）を防ぐ --- */
+.preview-sec, .char-preview, .rel-img-preview, .term-grid {
+    page-break-inside: avoid; /* 古いブラウザ・PDFライブラリ用 */
+    break-inside: avoid;      /* 新しいブラウザ用 */
+    margin-bottom: 20px;
+}
