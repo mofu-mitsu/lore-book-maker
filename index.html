@@ -3,7 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>設定資料集ジェネレーター</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GNTX973GET"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GNTX973GET');
+    </script>
+    <!-- ✨ SEO対策・魅力的なタイトルと説明文 -->
+    <title>世界観・設定資料集ジェネレーター【無料・高画質PDF出力】 | もふみつ工房</title>
+    <meta name="description" content="小説やゲーム、TRPGの創作活動をサポート！あなたの頭の中にある世界観、キャラクター、相関図、年表などを、綺麗な1冊の設定資料集（PDF）としてまとめられる無料ツールです。">
+    <meta name="keywords" content="設定資料集,世界観,キャラクター作成,相関図,年表,小説執筆,TRPG,同人誌,ジェネレーター,もふみつ工房">
+    <meta name="author" content="もふみつ工房">
+
+    <!-- ✨ OGP（SNSでシェアされた時の表示設定） -->
+    <meta property="og:site_name" content="もふみつ工房">
+    <meta property="og:title" content="世界観・設定資料集ジェネレーター【無料・高画質PDF出力】">
+    <meta property="og:description" content="小説やゲーム、TRPGの創作活動をサポート！あなたの頭の中にある設定を綺麗な1冊の資料集（PDF）としてまとめられる無料ツールです。">
+    <!-- ※ 本番環境のURLに合わせて ogp.png を読み込みます -->
+    <meta property="og:image" content="https://mofu-mitsu.github.io/lore-book-maker/ogp.png">
+    <meta property="og:url" content="https://mofu-mitsu.github.io/lore-book-maker/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <!-- ✨ 絵文字のFavicon（ブラウザのタブに表示されるアイコン 📖） -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%%22 y=%2250%%22 style=%22dominant-baseline:central;text-anchor:middle;font-size:90px;%22>📖</text></svg>">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -11,7 +36,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- 上部のナビゲーション -->
     <nav class="top-nav">
         <div class="hamburger" id="nav-hamburger"><i class="fa-solid fa-bars"></i></div>
         <div class="nav-links" id="nav-links">
@@ -22,12 +46,9 @@
         </div>
     </nav>
 
-    <!-- ヘッダー（ツールボタン群） -->
     <header>
         <h1><i class="fa-solid fa-book-journal-whills"></i> 設定資料集ジェネレーター</h1>
-        <!-- スマホ用：ツールボタンのハンバーガー（点々） -->
         <div class="tools-hamburger" id="tools-hamburger"><i class="fa-solid fa-ellipsis-vertical"></i></div>
-        
         <div class="header-btns" id="header-btns">
             <button id="pro-upgrade-btn" class="btn-pro" style="display: none;"><i class="fa-solid fa-crown"></i> Pro版へ</button>
             <button id="share-btn" class="btn-add"><i class="fa-solid fa-share-nodes"></i> 共有リンク</button>
@@ -40,7 +61,6 @@
     </header>
 
     <div class="container">
-        <!-- 左側：エディター -->
         <div class="editor-area">
             <h2><i class="fa-solid fa-pen-nib"></i> 編集エリア</h2>
             
@@ -52,10 +72,10 @@
                 <label for="cover-image" class="custom-file-upload"><i class="fa-solid fa-image"></i> 画像を選択</label>
                 <input type="file" id="cover-image" accept="image/*">
                 <div id="cover-file-name" class="file-name-display"></div>
+                <!-- ✨ 表紙画像の削除ボタン -->
+                <button id="clear-cover-btn" class="btn-secondary" style="display:none; padding:3px 8px; font-size:0.8rem; margin-top:5px;"><i class="fa-solid fa-xmark"></i> 画像を削除</button>
             </div>
 
-            <!-- 🎨 折りたたみ式で可愛いカラーパレット -->
-<!-- 🎨 折りたたみ式で可愛いカラーパレット -->
             <details class="color-palette-box box">
                 <summary>
                     <span><i class="fa-solid fa-palette"></i> テーマカラーをカスタマイズ</span>
@@ -67,13 +87,30 @@
                     <div class="color-item"><input type="color" id="color-text" value="#333333"><span>文字色</span></div>
                     <div class="color-item"><input type="color" id="color-bg" value="#ffffff"><span>背景色</span></div>
                 </div>
-                <!-- ✨ 反映ボタンを追加！ -->
                 <div style="text-align: center; margin-top: 15px;">
                     <button id="apply-color-btn" class="btn-primary" style="padding: 5px 15px; font-size: 0.9rem;">
                         <i class="fa-solid fa-check"></i> 色を反映する
                     </button>
                 </div>
             </details>
+
+            <div class="box">
+                <label><i class="fa-solid fa-list-ol"></i> PDF出力オプション <span class="pro-badge" style="background:#f1c40f; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:5px;">👑 Pro</span></label>
+                <label style="font-size: 0.9rem;">
+                    <input type="checkbox" id="toc-toggle" checked> 目次(INDEX)を自動生成する
+                </label>
+            </div>
+
+            <!-- ✨ ここが抜けてたから崩れてた！直したよ！ -->
+            <div class="box">
+                <label><i class="fa-solid fa-wand-magic-sparkles"></i> デザインテンプレート <span class="pro-badge" style="background:#f1c40f; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-left:5px;">👑 Pro</span></label>
+                <select id="template-select">
+                    <option value="default">シンプル（標準）</option>
+                    <option value="antique">アンティーク（古い羊皮紙風）</option>
+                    <option value="dark-fantasy">ダークファンタジー</option>
+                    <option value="cyberpunk">サイバーパンク</option>
+                </select>
+            </div>
 
             <div class="add-section-area box">
                 <label>追加する項目を選んでください</label>
@@ -96,7 +133,6 @@
             <div id="editor-sections"></div>
         </div>
 
-        <!-- 右側：プレビュー -->
         <div class="preview-area">
             <h2><i class="fa-solid fa-eye"></i> プレビュー</h2>
             <div id="pdf-content" class="document">
@@ -109,22 +145,8 @@
         </div>
     </div>
 
-    <!-- ヘルプ用のモーダル（ポップアップ） -->
-    <div id="help-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="close-modal">&times;</span>
-            <h2><i class="fa-solid fa-book-open"></i> 使い方・ヘルプ</h2>
-            <ul>
-                <li><strong>追加：</strong> プルダウンから好きな項目（キャラ、年表など）を選んで「追加」できます。</li>
-                <li><strong>並べ替え：</strong> 各項目の左上にある「<i class="fa-solid fa-grip-vertical"></i>」をドラッグすると、順番を自由に入れ替えられます。</li>
-                <li><strong>保存・読込：</strong> 「保存」を押すと、今のデータを<b>JSONファイル</b>としてパソコンに保存できます。「読込」からそのJSONファイルを選べば、いつでも続きから作業できます！</li>
-                <li><strong>共有リンク：</strong> Supabaseにデータを保存し、他の人に見せられる専用URLを発行します。（※ログイン推奨）</li>
-                <li><strong>PDF出力：</strong> 完成した資料集を、綺麗な本のようなPDFとしてダウンロードできます！</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- トースト通知用の枠 -->
+    <!-- モーダル・トースト -->
+    <div id="help-modal" class="modal"><div class="modal-content"><span class="close-btn" id="close-modal">&times;</span><h2>使い方</h2></div></div>
     <div id="toast" class="toast"></div>
 
     <script src="script.js"></script>
