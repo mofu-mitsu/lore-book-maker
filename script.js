@@ -9,7 +9,7 @@ const previewSections = document.getElementById('preview-sections');
 const titleInput = document.getElementById('project-title');
 const coverInput = document.getElementById('cover-image');
 let coverBase64Data = ""; 
-
+const clearCoverBtn = document.getElementById('clear-cover-btn');
 const authBtn = document.getElementById('auth-btn');
 const proBtn = document.getElementById('pro-upgrade-btn');
 let currentUser = null;
@@ -31,14 +31,18 @@ function showToast(message) {
 }
 
 // ====== ログイン状態監視 ======
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
     if (session) {
         currentUser = session.user;
         authBtn.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> ログアウト`;
         
-        // とりあえずログインしたらProボタンを出す（後でDBと連携）
+        // メタデータからPro判定
+        isProUser = currentUser.user_metadata?.is_pro === true;
+        
         if (!isProUser) {
-            proBtn.style.display = 'inline-flex';
+            proBtn.style.display = 'inline-flex'; // 未課金ならProボタン表示
+        } else {
+            proBtn.style.display = 'none'; // 課金済みならProボタンを隠す
         }
     } else {
         currentUser = null;
@@ -53,14 +57,23 @@ authBtn.addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
         showToast('<i class="fa-solid fa-check"></i> ログアウトしました');
     } else {
-        await supabaseClient.auth.signInWithOAuth({ provider: 'google' });
+        // ✨ ここにオプションを追加！「今のページのURLに正確に戻ってきてね」と指示する
+        await supabaseClient.auth.signInWithOAuth({ 
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin + window.location.pathname
+            }
+        });
     }
 });
 
 // Proボタン（Stripeへ）
 proBtn.addEventListener('click', () => {
-    // StripeのPayment Link URL
-    const stripeUrl = `https://buy.stripe.com/test_xxxxxxxxxxx?client_reference_id=${currentUser.id}`;
+    // ⚠️ 注意: コピーしたURLのうしろに "?client_reference_id=..." を必ずくっつけてね！
+    // こうすることで、StripeとSupabaseが「誰が買ったか」を裏で照合できるよ！
+    
+    const stripeUrl = `https://buy.stripe.com/test_9B600l0EGcoO91T88Q8Vi00?client_reference_id=${currentUser.id}`;
+    
     window.open(stripeUrl, '_blank');
 });
 
@@ -117,7 +130,8 @@ shareBtn.addEventListener('click', async () => {
             title: sec.querySelector('.input-title')?.value || '',
             meta: sec.querySelector('.input-meta')?.value || '',
             text: sec.querySelector('.input-data')?.value || '',
-            imgBase64: sec.querySelector('.img-base64')?.value || ''
+            imgBase64: sec.querySelector('.img-base64')?.value || '',
+            showHeader: sec.querySelector('.header-toggle-check').checked
         };
     });
 
@@ -155,6 +169,15 @@ shareBtn.addEventListener('click', async () => {
 });
 // ====== 共有リンクから飛んできた時の復元処理 ======
 window.addEventListener('DOMContentLoaded', async () => {
+    // ユーザー情報の強制リフレッシュ（決済後に戻ってきた時にProになるようにする）
+    const { data: { session } } = await supabaseClient.auth.refreshSession();
+    if (session && session.user.user_metadata?.is_pro === true) {
+        isProUser = true;
+        proBtn.style.display = 'none';
+        showToast('<i class="fa-solid fa-crown"></i> Pro機能が有効です！✨');
+    }
+
+    // （※この下に共有リンクの読み込み処理などが続きます）
     const urlParams = new URLSearchParams(window.location.search);
     const sharedId = urlParams.get('id');
 
@@ -228,9 +251,17 @@ coverInput.addEventListener('change', (e) => {
             const img = document.getElementById('preview-cover-img');
             img.src = coverBase64Data;
             img.style.display = 'block';
+            clearCoverBtn.style.display = 'inline-block'; // ✨画像が入ったら削除ボタンを出す
         };
         reader.readAsDataURL(file);
     }
+});
+clearCoverBtn.addEventListener('click', () => {
+    coverInput.value = ''; // 選択したファイルをリセット
+    coverBase64Data = '';
+    document.getElementById('preview-cover-img').style.display = 'none';
+    document.getElementById('cover-file-name').textContent = '';
+    clearCoverBtn.style.display = 'none'; // 削除ボタンを隠す
 });
 
 document.getElementById('add-sec-btn').addEventListener('click', () => {
@@ -242,35 +273,38 @@ function addSection(type, data = {}) {
     const id = Date.now().toString() + Math.floor(Math.random()*1000);
     const label = sectionLabels[type];
     
-    // JSON読込用データの処理（未定義エラーを防ぐ）
     const titleVal = data.title || '';
     const metaVal = data.meta || '';
     const textVal = data.text || '';
     const imgBase64Val = data.imgBase64 || '';
+    const showHeaderVal = data.showHeader !== false; // デフォルトは true（表示）
 
     let html = `<div class="editor-section" data-id="${id}" data-type="${type}">
                     <div class="sec-header">
                         <i class="fa-solid fa-grip-vertical drag-handle"></i>
                         <strong>${label}</strong>
+                        <!-- ✨ 見出しのON/OFFスイッチを追加 -->
+                        <label style="font-size:0.8rem; margin-left:auto; margin-right:15px; cursor:pointer;">
+                            <input type="checkbox" class="header-toggle-check" ${showHeaderVal ? 'checked' : ''}> 見出し表示
+                        </label>
                         <button class="delete-btn" onclick="removeSection('${id}')"><i class="fa-solid fa-trash"></i></button>
                     </div>`;
-
     if (type === 'custom') {
-        html += `<input type="text" class="input-title" placeholder="項目の見出し" value="${titleVal}">
-                 <textarea class="input-data" rows="4" placeholder="内容を入力...">${textVal}</textarea>`;
+        html += `<input type="text" class="input-title" placeholder="項目の見出し" value="${titleVal}"><textarea class="input-data" rows="4" placeholder="内容を入力...">${textVal}</textarea>`;
     } else if (type === 'character') {
-        html += `<input type="text" class="input-title" placeholder="キャラクター名" value="${titleVal}">
-                 <input type="text" class="input-meta" placeholder="年齢・性別・職業など" value="${metaVal}">
+        html += `<input type="text" class="input-title" placeholder="キャラクター名" value="${titleVal}"><input type="text" class="input-meta" placeholder="年齢・性別・職業など" value="${metaVal}">
                  <label class="custom-file-upload"><i class="fa-solid fa-image"></i> 画像を選択<input type="file" class="img-input" accept="image/*"></label>
                  <div class="file-name-display img-name">${imgBase64Val ? '画像設定済み' : ''}</div>
-                 <input type="hidden" class="img-base64" value="${imgBase64Val}">
-                 <textarea class="input-data" rows="3" placeholder="詳細...">${textVal}</textarea>`;
+                 <!-- ✨ 画像削除ボタン -->
+                 <button type="button" class="clear-img-btn btn-secondary" style="display:${imgBase64Val ? 'inline-block' : 'none'}; padding:3px 8px; font-size:0.8rem; margin-top:5px;"><i class="fa-solid fa-xmark"></i> 画像を削除</button>
+                 <input type="hidden" class="img-base64" value="${imgBase64Val}"><textarea class="input-data" rows="3" placeholder="詳細...">${textVal}</textarea>`;
     } else if (type === 'relationship') {
         html += `<input type="text" class="input-title" placeholder="図のタイトル" value="${titleVal}">
                  <label class="custom-file-upload"><i class="fa-solid fa-project-diagram"></i> 関係図を選択<input type="file" class="img-input" accept="image/*"></label>
                  <div class="file-name-display img-name">${imgBase64Val ? '画像設定済み' : ''}</div>
-                 <input type="hidden" class="img-base64" value="${imgBase64Val}">
-                 <textarea class="input-data" rows="3" placeholder="図の補足説明...">${textVal}</textarea>`;
+                 <!-- ✨ 画像削除ボタン -->
+                 <button type="button" class="clear-img-btn btn-secondary" style="display:${imgBase64Val ? 'inline-block' : 'none'}; padding:3px 8px; font-size:0.8rem; margin-top:5px;"><i class="fa-solid fa-xmark"></i> 画像を削除</button>
+                 <input type="hidden" class="img-base64" value="${imgBase64Val}"><textarea class="input-data" rows="3" placeholder="図の補足説明...">${textVal}</textarea>`;
     } else if (type === 'term' || type === 'history') {
         html += `<input type="text" class="input-title" placeholder="${type === 'term' ? '用語名' : '年'}" value="${titleVal}">
                  <input type="text" class="input-meta" placeholder="${type === 'term' ? '読み・分類' : '関連勢力など'}" value="${metaVal}">
@@ -285,18 +319,29 @@ function addSection(type, data = {}) {
     newEl.querySelectorAll('input:not([type="file"]), textarea').forEach(el => el.addEventListener('input', updatePreview));
 
     const imgInput = newEl.querySelector('.img-input');
+    const clearImgBtn = newEl.querySelector('.clear-img-btn'); // ✨追加
     if (imgInput) {
         imgInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 newEl.querySelector('.img-name').textContent = file.name;
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    newEl.querySelector('.img-base64').value = event.target.result;
-                    updatePreview();
+                reader.onload = (event) => { 
+                    newEl.querySelector('.img-base64').value = event.target.result; 
+                    clearImgBtn.style.display = 'inline-block'; // ✨ボタンを出す
+                    updatePreview(); 
                 };
                 reader.readAsDataURL(file);
             }
+        });
+        
+        // ✨画像を削除する処理
+        clearImgBtn.addEventListener('click', () => {
+            imgInput.value = '';
+            newEl.querySelector('.img-base64').value = '';
+            newEl.querySelector('.img-name').textContent = '';
+            clearImgBtn.style.display = 'none';
+            updatePreview();
         });
     }
     updatePreview();
@@ -317,24 +362,31 @@ function updatePreview() {
         const meta = sec.querySelector('.input-meta')?.value || '';
         const data = sec.querySelector('.input-data')?.value.replace(/\n/g, '<br>') || '';
         const label = sectionLabels[type];
+        // ✨ 見出しを表示するかどうかの判定
+        const showHeader = sec.querySelector('.header-toggle-check').checked;
 
         let html = `<div class="preview-sec">`;
         
         if (type === 'custom') {
-            html += `<h2>■ ${title || 'カスタム項目'}</h2><p>${data}</p>`;
+            if (showHeader) html += `<h2>■ ${title || 'カスタム項目'}</h2>`;
+            html += `<p>${data}</p>`;
         } else if (type === 'character') {
             const imgBase64 = sec.querySelector('.img-base64')?.value;
             const imgSrc = imgBase64 ? imgBase64 : 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
             const imgHtml = imgBase64 ? `<img src="${imgSrc}" class="char-img-preview">` : '';
-            html += `<h2>■ キャラクター：${title || '未設定'}</h2><div class="char-preview">${imgHtml}<div class="char-info"><h3>${title || '未設定'}</h3><strong>${meta}</strong><p>${data}</p></div></div>`;
+            if (showHeader) html += `<h2>■ キャラクター：${title || '未設定'}</h2>`;
+            html += `<div class="char-preview">${imgHtml}<div class="char-info"><h3>${title || '未設定'}</h3><strong>${meta}</strong><p>${data}</p></div></div>`;
         } else if (type === 'relationship') {
             const imgBase64 = sec.querySelector('.img-base64')?.value;
             const imgHtml = imgBase64 ? `<img src="${imgBase64}" class="rel-img-preview">` : '';
-            html += `<h2>■ ${title || '相関図・関係図'}</h2>${imgHtml}<p>${data}</p>`;
+            if (showHeader) html += `<h2>■ ${title || '相関図・関係図'}</h2>`;
+            html += `${imgHtml}<p>${data}</p>`;
         } else if (type === 'term' || type === 'history') {
-            html += `<h2>■ ${label}：${title || '未設定'}</h2><div class="term-grid"><strong>${type === 'term' ? '分類/読' : '関連情報'}</strong><div>${meta}</div><strong>解説</strong><div>${data}</div></div>`;
+            if (showHeader) html += `<h2>■ ${label}：${title || '未設定'}</h2>`;
+            html += `<div class="term-grid"><strong>${type === 'term' ? '分類/読' : '関連情報'}</strong><div>${meta}</div><strong>解説</strong><div>${data}</div></div>`;
         } else {
-            html += `<h2>■ ${label}</h2><p>${data}</p>`;
+            if (showHeader) html += `<h2>■ ${label}</h2>`;
+            html += `<p>${data}</p>`;
         }
         html += `</div>`;
         previewSections.insertAdjacentHTML('beforeend', html);
@@ -342,12 +394,81 @@ function updatePreview() {
 }
 
 // ====== PDF出力 ======
+const templateSelect = document.getElementById('template-select');
+const pdfContent = document.getElementById('pdf-content');
+
+templateSelect.addEventListener('change', (e) => {
+    // ユーザーがProじゃないのにテンプレを変えようとしたら弾く！
+    if (!isProUser && e.target.value !== 'default') {
+        showToast('<i class="fa-solid fa-crown"></i> このテンプレートはPro版限定の機能です！');
+        e.target.value = 'default'; // 選択をシンプルに戻す
+        return;
+    }
+    
+    // プレビューのクラスを入れ替えてデザインを変更
+    pdfContent.className = 'document';
+    if (e.target.value !== 'default') {
+        pdfContent.classList.add(`template-${e.target.value}`);
+    }
+});
+
+
+// ====== PDF出力（👑 目次・ページ番号・テンプレ対応） ======
 document.getElementById('export-pdf').addEventListener('click', () => {
-    html2pdf().set({
-        margin: 15, filename: `${titleInput.value || '設定資料集'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(document.getElementById('pdf-content')).save();
+    // 👑 ユーザーが設定した「目次をつけるか」のチェックを確認！
+    const isTocEnabled = document.getElementById('toc-toggle').checked;
+    
+    let tocElement = document.getElementById('pdf-toc');
+    // 古い目次があれば一旦消す
+    if (tocElement) tocElement.remove();
+
+    if (isProUser && isTocEnabled) {
+        tocElement = document.createElement('div');
+        tocElement.id = 'pdf-toc';
+        tocElement.className = 'toc-container preview-sec';
+        
+        let tocHtml = `<h2>■ 目次 (INDEX)</h2><ul class="toc-list">`;
+        pdfContent.querySelectorAll('.preview-sec h2').forEach(sec => {
+            if (!sec.innerText.includes('目次')) {
+                tocHtml += `<li>${sec.innerText.replace('■ ', '')}</li>`;
+            }
+        });
+        tocHtml += `</ul>`;
+        tocElement.innerHTML = tocHtml;
+        document.getElementById('preview-cover').after(tocElement);
+    }
+
+    const imageQuality = isProUser ? 1.0 : 0.8;
+    const canvasScale = isProUser ? 3 : 1.5; 
+
+    if (!isProUser) showToast('<i class="fa-solid fa-circle-info"></i> 無料版のため透かしが入ります');
+    else showToast('<i class="fa-solid fa-crown"></i> PDFを生成中...');
+
+    // ✨ pagebreak: { mode: 'avoid-all' } を追加して見切れを防止！
+    const opt = {
+        margin: 15, 
+        filename: `${titleInput.value || '設定資料集'}.pdf`,
+        image: { type: 'jpeg', quality: imageQuality },
+        html2canvas: { scale: canvasScale, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'avoid-all'] } // これが画像分割を防ぐ魔法！
+    };
+
+    html2pdf().set(opt).from(pdfContent).toPdf().get('pdf').then(function(pdf) {
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(10);
+            
+            if (isProUser) {
+                pdf.setTextColor(120, 120, 120);
+                pdf.text(`- ${i} -`, 105, 287, { align: 'center' });
+            } else {
+                pdf.setTextColor(150, 150, 150);
+                pdf.text('Created by lore-book-maker (Free Version)', 115, 287);
+            }
+        }
+    }).save();
 });
 
 // ====== JSON保存＆読込 ======
@@ -356,7 +477,8 @@ document.getElementById('save-json').addEventListener('click', () => {
         return {
             type: sec.dataset.type, title: sec.querySelector('.input-title')?.value || '',
             meta: sec.querySelector('.input-meta')?.value || '', text: sec.querySelector('.input-data')?.value || '',
-            imgBase64: sec.querySelector('.img-base64')?.value || ''
+            imgBase64: sec.querySelector('.img-base64')?.value || '',
+            showHeader: sec.querySelector('.header-toggle-check').checked
         };
     });
     const saveData = { 
