@@ -57,11 +57,11 @@ authBtn.addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
         showToast('<i class="fa-solid fa-check"></i> ログアウトしました');
     } else {
-        // ✨ ここにオプションを追加！「今のページのURLに正確に戻ってきてね」と指示する
+        // ✨ リダイレクト先を「今開いているURL（余計な文字を省いたもの）」に完全固定！
         await supabaseClient.auth.signInWithOAuth({ 
             provider: 'google',
             options: {
-                redirectTo: window.location.origin + window.location.pathname
+                redirectTo: window.location.href.split('#')[0].split('?')[0]
             }
         });
     }
@@ -169,15 +169,20 @@ shareBtn.addEventListener('click', async () => {
 });
 // ====== 共有リンクから飛んできた時の復元処理 ======
 window.addEventListener('DOMContentLoaded', async () => {
-    // ユーザー情報の強制リフレッシュ（決済後に戻ってきた時にProになるようにする）
-    const { data: { session } } = await supabaseClient.auth.refreshSession();
-    if (session && session.user.user_metadata?.is_pro === true) {
-        isProUser = true;
-        proBtn.style.display = 'none';
-        showToast('<i class="fa-solid fa-crown"></i> Pro機能が有効です！✨');
+    
+    // ✨ ログインしている時【だけ】最新情報にリフレッシュする（無限ループ防止！！）
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        const { data: { session: refreshedSession } } = await supabaseClient.auth.refreshSession();
+        if (refreshedSession && refreshedSession.user.user_metadata?.is_pro === true) {
+            isProUser = true;
+            proBtn.style.display = 'none';
+            // トーストが何度も出ないように、Proになった瞬間だけ出すような工夫
+            console.log("Pro機能有効確認済み");
+        }
     }
 
-    // （※この下に共有リンクの読み込み処理などが続きます）
+    // （以下、共有リンクの読み込み処理）
     const urlParams = new URLSearchParams(window.location.search);
     const sharedId = urlParams.get('id');
 
