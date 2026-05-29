@@ -615,3 +615,13 @@ input[type="color"]:hover { transform: scale(1.15) translateY(-2px); box-shadow:
     break-inside: avoid;      /* 新しいブラウザ用 */
     margin-bottom: 20px;
 }
+
+/* --- 長文改行・PDF見切れ防止・アコーディオン矢印 --- */
+.document { word-break: break-all; overflow-wrap: break-word; }
+.preview-sec p { white-space: pre-wrap; }
+.preview-sec, .char-preview, .rel-img-preview, .term-grid {
+    page-break-inside: avoid; break-inside: avoid; margin-bottom: 20px;
+}
+.color-palette-box summary { display: flex; justify-content: space-between; align-items: center; }
+.color-palette-box summary .arrow-icon { transition: transform 0.3s ease; }
+.color-palette-box[open] summary .arrow-icon { transform: rotate(180deg); }
