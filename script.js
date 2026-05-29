@@ -2,7 +2,26 @@
 const SUPABASE_URL = 'https://yeveuzdezowqijcyyxiv.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlldmV1emRlem93cWlqY3l5eGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4Njc0NjAsImV4cCI6MjA3NDQ0MzQ2MH0.5Kd9ZNfLR0Hzpnz1H1tBXzvP_CWUD0u00c2UsfD1GfI';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ====== ヘルプモーダルの開閉処理 ======
+const helpModal = document.getElementById('help-modal');
+const closeHelpModal = document.getElementById('close-modal');
 
+// ヘルプリンクを押したら表示
+document.getElementById('help-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    helpModal.style.display = 'block';
+});
+
+// ×ボタンを押したら閉じる
+closeHelpModal.addEventListener('click', () => {
+    helpModal.style.display = 'none';
+});
+
+// モーダルの外側（黒い背景部分）をクリックした時に閉じる処理をまとめる
+window.addEventListener('click', (e) => {
+    if (e.target === helpModal) helpModal.style.display = 'none';
+    if (e.target === proModal) proModal.style.display = 'none'; // Pro認証モーダルも一緒に外側クリックで閉じるように
+});
 // ====== UI要素の取得 ======
 const editorSections = document.getElementById('editor-sections');
 const previewSections = document.getElementById('preview-sections');
