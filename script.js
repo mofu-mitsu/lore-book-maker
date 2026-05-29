@@ -69,47 +69,54 @@ authBtn.addEventListener('click', async () => {
 
 // Proボタン（Stripeへ）
 // ====== 👑 Proボタン（BOOTHライセンス認証に変更！） ======
-proBtn.addEventListener('click', async () => {
-    // 画面にポップアップを出して合言葉キーを入力してもらう！
-    const key = prompt(
-        "👑 Pro版ライセンスキーの認証\n\n" +
-        "BOOTHで購入した【注文番号-合言葉】を入力してください。\n" +
-        "👉 https://torisproject.booth.pm/\n\n" +
-        "ライセンスキーを入力："
-    );
-    
-    if (!key) return; // キャンセルされたら何もしない
+// ====== 👑 BOOTH ライセンスキー認証（モーダル版！） ======
+const proModal = document.getElementById('pro-modal');
+const closeProModal = document.getElementById('close-pro-modal');
+const submitLicenseBtn = document.getElementById('submit-license-btn');
+const licenseKeyInput = document.getElementById('license-key-input');
 
-    const originalText = proBtn.innerHTML;
-    proBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 認証中...`;
-    proBtn.disabled = true;
+// Proボタンを押したらモーダルを開く
+proBtn.addEventListener('click', () => {
+    proModal.style.display = 'block';
+    licenseKeyInput.value = ''; // 入力欄を空にする
+});
+
+// ×ボタンや外側をクリックで閉じる
+closeProModal.addEventListener('click', () => proModal.style.display = 'none');
+window.addEventListener('click', (e) => { if (e.target === proModal) proModal.style.display = 'none'; });
+
+// 「認証する」ボタンを押した時の処理
+submitLicenseBtn.addEventListener('click', async () => {
+    const key = licenseKeyInput.value.trim();
+    if (!key) {
+        showToast('<i class="fa-solid fa-triangle-exclamation"></i> キーを入力してください！');
+        return;
+    }
+
+    const originalText = submitLicenseBtn.innerHTML;
+    submitLicenseBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 認証中...`;
+    submitLicenseBtn.disabled = true;
 
     try {
-        // 新しいロボット「verify-license」にキーを送信してチェックしてもらう！
         const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-license`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({ licenseKey: key.trim(), userId: currentUser.id })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ licenseKey: key, userId: currentUser.id })
         });
-
         const result = await response.json();
 
         if (response.ok && result.success) {
+            proModal.style.display = 'none'; // モーダルを閉じる
             showToast('<i class="fa-solid fa-crown"></i> Pro機能が有効化されました！✨');
-            // 2秒後に自動でリロードして、Pro機能を反映させる
             setTimeout(() => { location.reload(); }, 2000);
         } else {
-            showToast(`<i class="fa-solid fa-triangle-exclamation"></i> ${result.error || '認証に失敗しました💦'}`);
+            showToast(`<i class="fa-solid fa-triangle-exclamation"></i> ${result.error || '認証失敗💦'}`);
         }
     } catch (err) {
-        console.error("認証エラー:", err);
         showToast('<i class="fa-solid fa-triangle-exclamation"></i> 通信エラーが発生しました💦');
     } finally {
-        proBtn.innerHTML = originalText;
-        proBtn.disabled = false;
+        submitLicenseBtn.innerHTML = originalText;
+        submitLicenseBtn.disabled = false;
     }
 });
 
