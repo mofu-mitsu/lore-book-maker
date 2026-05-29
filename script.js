@@ -68,13 +68,49 @@ authBtn.addEventListener('click', async () => {
 });
 
 // Proボタン（Stripeへ）
-proBtn.addEventListener('click', () => {
-    // ⚠️ 注意: コピーしたURLのうしろに "?client_reference_id=..." を必ずくっつけてね！
-    // こうすることで、StripeとSupabaseが「誰が買ったか」を裏で照合できるよ！
+// ====== 👑 Proボタン（BOOTHライセンス認証に変更！） ======
+proBtn.addEventListener('click', async () => {
+    // 画面にポップアップを出して合言葉キーを入力してもらう！
+    const key = prompt(
+        "👑 Pro版ライセンスキーの認証\n\n" +
+        "BOOTHで購入した【注文番号-合言葉】を入力してください。\n" +
+        "👉 https://torisproject.booth.pm/\n\n" +
+        "ライセンスキーを入力："
+    );
     
-    const stripeUrl = `https://buy.stripe.com/test_9B600l0EGcoO91T88Q8Vi00?client_reference_id=${currentUser.id}`;
-    
-    window.open(stripeUrl, '_blank');
+    if (!key) return; // キャンセルされたら何もしない
+
+    const originalText = proBtn.innerHTML;
+    proBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 認証中...`;
+    proBtn.disabled = true;
+
+    try {
+        // 新しいロボット「verify-license」にキーを送信してチェックしてもらう！
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/verify-license`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ licenseKey: key.trim(), userId: currentUser.id })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showToast('<i class="fa-solid fa-crown"></i> Pro機能が有効化されました！✨');
+            // 2秒後に自動でリロードして、Pro機能を反映させる
+            setTimeout(() => { location.reload(); }, 2000);
+        } else {
+            showToast(`<i class="fa-solid fa-triangle-exclamation"></i> ${result.error || '認証に失敗しました💦'}`);
+        }
+    } catch (err) {
+        console.error("認証エラー:", err);
+        showToast('<i class="fa-solid fa-triangle-exclamation"></i> 通信エラーが発生しました💦');
+    } finally {
+        proBtn.innerHTML = originalText;
+        proBtn.disabled = false;
+    }
 });
 
 // ====== カラーパレット ======
