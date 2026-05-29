@@ -148,7 +148,25 @@
     <!-- モーダル・トースト -->
     <div id="help-modal" class="modal"><div class="modal-content"><span class="close-btn" id="close-modal">&times;</span><h2>使い方</h2></div></div>
     <div id="toast" class="toast"></div>
-
+    <div id="pro-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px; text-align: center;">
+            <span class="close-btn" id="close-pro-modal">&times;</span>
+            <h2 style="color: #f1c40f; margin-bottom: 10px;"><i class="fa-solid fa-crown"></i> Pro版の有効化</h2>
+            <p style="font-size: 0.9rem; text-align: left; line-height: 1.6;">
+                BOOTHでご購入後にダウンロードできるファイルに記載されている<br>
+                <strong>【注文番号-合言葉】</strong> を入力してください。
+            </p>
+            <input type="text" id="license-key-input" placeholder="例: 12345678-MOFUMITSU-PRO" style="width: 100%; padding: 10px; margin: 15px 0; font-size: 1rem; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            <button id="submit-license-btn" class="btn-pro" style="width: 100%; padding: 12px; font-size: 1.1rem; justify-content: center;"><i class="fa-solid fa-key"></i> 認証してPro版にする</button>
+            
+            <div style="margin-top: 25px; font-size: 0.85rem; border-top: 1px dashed #ccc; padding-top: 15px; text-align: left;">
+                <span style="color: #666;">まだライセンスをお持ちでない場合</span><br>
+                <a href="https://torisproject.booth.pm/items/8429352" target="_blank" style="display: inline-block; margin-top: 10px; background: #fc4d50; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                    <i class="fa-solid fa-cart-shopping"></i> BOOTHストアで購入する
+                </a>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 
     <footer style="text-align: center; padding: 20px; font-size: 0.8rem; color: #7f8c8d; margin-top: 20px;">
