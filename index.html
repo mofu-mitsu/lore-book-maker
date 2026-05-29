@@ -146,7 +146,22 @@
     </div>
 
     <!-- モーダル・トースト -->
-    <div id="help-modal" class="modal"><div class="modal-content"><span class="close-btn" id="close-modal">&times;</span><h2>使い方</h2></div></div>
+    <!-- ヘルプ用のモーダル（ポップアップ） -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: left;">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0;">
+                <i class="fa-solid fa-book-open"></i> 使い方・ヘルプ
+            </h2>
+            <ul style="padding-left: 20px; line-height: 1.8; font-size: 0.95rem;">
+                <li style="margin-bottom: 12px;"><strong>項目を追加：</strong> プルダウンから項目（世界概要、キャラ、年表など）を選んで「追加」します。</li>
+                <li style="margin-bottom: 12px;"><strong>順番の並び替え：</strong> 各項目の左上にある「<i class="fa-solid fa-grip-vertical"></i>」をドラッグ＆ドロップすると、順番を自由に入れ替えられます。</li>
+                <li style="margin-bottom: 12px;"><strong>保存・読込：</strong> 「保存」を押すとデータを<b>JSONファイル</b>で保存できます。「読込」からそのファイルを読み込めば、いつでも続きから再開できます。</li>
+                <li style="margin-bottom: 12px;"><strong>共有リンク：</strong> Supabaseにデータを一時保存し、他の人に見せられる専用のWeb公開URLを発行します（※ログインが必要です）。</li>
+                <li style="margin-bottom: 12px;"><strong>PDF出力：</strong> 完成した資料集を、本のような美しいレイアウトでPDF化してダウンロードできます！</li>
+            </ul>
+        </div>
+    </div>
     <div id="toast" class="toast"></div>
     <div id="pro-modal" class="modal">
         <div class="modal-content" style="max-width: 450px; text-align: center;">
